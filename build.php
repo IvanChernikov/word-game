@@ -2,7 +2,7 @@
 
 $json = json_decode(file_get_contents('resource/board.json'));
 
-//$stream = fopen('resource/board.dat', 'wb');
+$stream = fopen('resource/board.dat', 'wb');
 
 $hex = [];
 
@@ -12,9 +12,9 @@ foreach ($json->board as $row) {
     foreach ($row as $square) {
         $offset = ($count * 3);
         $bin |= $square << $offset;
-        echo "$offset => $bin\n";
+        //echo "$offset => $bin\n";
         if ($count === 4) {
-            $hex[] = bin2hex($bin);
+            $hex[] = pack("n", $bin);
             $bin   = 0;
             $count = 0;
         }
@@ -22,5 +22,6 @@ foreach ($json->board as $row) {
     }
 }
 
+
 //fclose($stream);
-//print_r($hex);
+print_r($hex);
