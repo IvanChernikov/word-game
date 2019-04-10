@@ -9,7 +9,7 @@ use Word\Game\Board;
 $json = json_decode(file_get_contents('resource/board.json'));
 
 $board = Board::fromArray($json->board);
-$board->build();
+$board->buildNoConversion();
 
 // TEST
 function validate(array $expected, Board $board)
@@ -26,17 +26,17 @@ function validate(array $expected, Board $board)
 
     echo "\n$validation\n";
 }
-
+/*
 echo "Validate binary load:\n\n";
 $board = Board::fromBinary();
 validate($json->board, $board);
-
+*/
 echo "Validate binary bit-shift load:\n\n";
 $board = Board::fromBinaryBitShift();
 validate($json->board, $board);
 
 // SPEED
-
+/*
 function speed(int $iterations, callable $method)
 {
     $time = microtime(true);
@@ -58,3 +58,4 @@ echo "Test binary bit-shift load (x$iterations):\n\n";
 speed($iterations, function () {
     Board::fromBinaryBitShift();
 });
+*/

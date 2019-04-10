@@ -80,12 +80,38 @@ class Board
         $data = "";
 
         foreach ($this->tiles as $row) {
-            $bytes = "0";
+            $set = "0";
             foreach ($row as $square) {
-                $bytes .= sprintf("%'.03d", decbin($square));
-                if (strlen($bytes) === 16) {
-                    $data  .= pack("n", bindec($bytes));
-                    $bytes = "0";
+                $set .= sprintf("%'.03d", decbin($square));
+                if (strlen($set) === 16) {
+                    $data .= pack("n", bindec($set));
+                    $set  = "0";
+                }
+            }
+        }
+
+        fwrite($stream, $data);
+        fclose($stream);
+    }
+
+    public function buildNoConversion($path = self::BINARY_DEFAULT)
+    {
+        $stream = fopen($path, 'wb');
+
+        $data = "";
+
+        foreach ($this->tiles as $row) {
+            $set   = 0;
+            $count = 4;
+            foreach ($row as $square) {
+                $offset = $count * 3;
+                echo "$offset\n";
+                $set |= $square << $offset;
+                $count--;
+                if ($count == 0) {
+                    $count = 4;
+                    $set   = 0;
+                    $data  .= pack("n", $set);
                 }
             }
         }
