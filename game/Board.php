@@ -42,20 +42,21 @@ class Board
 
     public static function fromBinaryBitShift(string $path = self::BINARY_DEFAULT)
     {
-        $stream = fopen($path, 'rb');
-        $tiles  = [];
-        $count  = 0;
-        $mask   = ((1 << 3) - 1);
-        while ($data = fread($stream, 2)) {
-            $ray = unpack('n', $data);
-            $i   = intdiv($count, 15);
-            for ($p = 4; $p >= 0; $p--) {
-                $tiles[$i][] = ($ray[1] >> ($p * 3)) & $mask;
-                $count++;
+        $stream = fopen($path, 'rb'); // open stream to binary file
+        $tiles  = []; // init board tile array
+        $count  = 0; // init set iterations ( 3 sets per row )
+        $mask   = ((1 << 3) - 1); // bit mask -> 111
+        while ($data = fread($stream, 2)) { // read 2 bytes from stream
+            $ray = unpack('n', $data); // unpack the bytes as a short
+            $idx = intdiv($count, 3); // set row index
+            for ($pos = 4; $pos >= 0; $pos--) { // iterate through the 5 sets of 3 bits
+                // tile value = [ shift set of bits to start and extract the value ]
+                $tiles[$idx][] = ($ray[1] >> ($pos * 3)) & $mask;
             }
+            $count++; // increment set
         }
-        fclose($stream);
-        return new static($tiles);
+        fclose($stream); // close stream
+        return new static($tiles); // return Board object with loaded tiles
     }
 
     public static function fromArray(array $array)
