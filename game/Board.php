@@ -16,42 +16,16 @@ class Board
 
     public static function fromBinary(string $path = self::BINARY_DEFAULT)
     {
-        $stream = fopen($path, 'rb');
-        $raw    = fread($stream, 240);
-        fclose($stream);
-
-        $binary = unpack("n*", $raw);
-
-        $tiles = [];
-        $index = 0;
-        foreach ($binary as $set) {
-            $cells = str_split(substr(sprintf("%'.016s", decbin($set)), 1), 3);
-            foreach ($cells as $cell) {
-                $int = bindec($cell);
-                $key = intdiv($index, 15);
-                if (!key_exists($key, $tiles)) {
-                    $tiles[$key] = [];
-                }
-                $tiles[$key][] = $int;
-                $index++;
-            }
-        }
-
-        return new static($tiles);
-    }
-
-    public static function fromBinaryBitShift(string $path = self::BINARY_DEFAULT)
-    {
         $stream = fopen($path, 'rb'); // open stream to binary file
         $tiles  = []; // init board tile array
         $count  = 0; // init set iterations ( 3 sets per row )
         $mask   = ((1 << 3) - 1); // bit mask -> 111
         while ($data = fread($stream, 2)) { // read 2 bytes from stream
-            $ray = unpack('n', $data); // unpack the bytes as a short
-            $idx = intdiv($count, 3); // set row index
-            for ($pos = 4; $pos >= 0; $pos--) { // iterate through the 5 sets of 3 bits
+            $set = unpack('n', $data); // unpack the bytes as a short
+            $idx = intdiv($count, 3); // get row index
+            for ($pos = 0; $pos < 5; $pos++) { // iterate through the 5 sets of 3 bits
                 // tile value = [ shift set of bits to start and extract the value ]
-                $tiles[$idx][] = ($ray[1] >> ($pos * 3)) & $mask;
+                $tiles[$idx][] = ($set[1] >> ($pos * 3)) & $mask;
             }
             $count++; // increment set
         }
@@ -80,43 +54,16 @@ class Board
         $data = "";
 
         foreach ($this->tiles as $row) {
-            $set = "0";
-            foreach ($row as $square) {
-                $set .= sprintf("%'.03d", decbin($square));
-                if (strlen($set) === 16) {
-                    $data .= pack("n", bindec($set));
-                    $set  = "0";
-                }
+            $bytes = [0, 0, 0]; // row represented as 3 sets of 2 bytes
+            foreach ($row as $x => $tile) { // tile is an integer in range 0-7 so we need 3 bits to encode
+                $set         = intdiv($x, 5); // get set index
+                $offset      = ($x % 5) * 3; // get tile bits offset
+                $bytes[$set] |= $tile << $offset; // insert bits at offset position
             }
+            $data .= pack('nnn', ...$bytes); // pack encoded bytes
         }
 
-        fwrite($stream, $data);
-        fclose($stream);
-    }
-
-    public function buildNoConversion($path = self::BINARY_DEFAULT)
-    {
-        $stream = fopen($path, 'wb');
-
-        $data = "";
-
-        foreach ($this->tiles as $row) {
-            $set   = 0;
-            $count = 4;
-            foreach ($row as $square) {
-                $offset = $count * 3;
-                echo "$offset\n";
-                $set |= $square << $offset;
-                $count--;
-                if ($count == 0) {
-                    $count = 4;
-                    $set   = 0;
-                    $data  .= pack("n", $set);
-                }
-            }
-        }
-
-        fwrite($stream, $data);
+        fwrite($stream, $data); // write encoded data
         fclose($stream);
     }
 }

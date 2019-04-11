@@ -4,14 +4,6 @@ include_once('game/Board.php');
 
 use Word\Game\Board;
 
-// WRITE
-
-$json = json_decode(file_get_contents('resource/board.json'));
-
-$board = Board::fromArray($json->board);
-$board->buildNoConversion();
-
-// TEST
 function validate(array $expected, Board $board)
 {
     $validation = "";
@@ -26,17 +18,7 @@ function validate(array $expected, Board $board)
 
     echo "\n$validation\n";
 }
-/*
-echo "Validate binary load:\n\n";
-$board = Board::fromBinary();
-validate($json->board, $board);
-*/
-echo "Validate binary bit-shift load:\n\n";
-$board = Board::fromBinaryBitShift();
-validate($json->board, $board);
 
-// SPEED
-/*
 function speed(int $iterations, callable $method)
 {
     $time = microtime(true);
@@ -47,8 +29,28 @@ function speed(int $iterations, callable $method)
     echo "Finished in {$time}s\n";
 }
 
-$iterations = 10000;
+// WRITE
 
+$json = json_decode(file_get_contents('resource/board-no-def.json'));
+
+$board = Board::fromArray($json->board);
+$board->build();
+
+// TEST
+
+/*
+echo "Validate binary load:\n\n";
+$board = Board::fromBinary();
+validate($json->board, $board);
+*/
+echo "Validate binary bit-shift load:\n\n";
+$board = Board::fromBinary();
+validate($json->board, $board);
+
+// SPEED
+
+$iterations = 10000;
+/*
 echo "Test binary load (x$iterations):\n\n";
 speed($iterations, function () {
     Board::fromBinary();
@@ -59,3 +61,7 @@ speed($iterations, function () {
     Board::fromBinaryBitShift();
 });
 */
+echo "Test build (x$iterations):\n\n";
+speed($iterations, function () use ($board) {
+    $board->build();
+});
